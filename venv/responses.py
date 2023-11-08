@@ -57,47 +57,39 @@ udp_port7778 = 7778
 udp_port7779 = 7779
 udp_port7780 = 7780
 
-cabbages_web = 'running :bulb:' if check_tcp_port(cabbages_url, tcp_port80) else 'unavailable :wrench:'
-cabbages7777 = 'up :white_check_mark:' if check_udp_port(cabbages_url, udp_port7777) else 'down :x:'
-cabbages7778 = 'up :white_check_mark:' if check_udp_port(cabbages_url, udp_port7778) else 'down :x:'
-cabbages_ports = [cabbages7777, cabbages7778]
-cabbages_count = 0
 
-for port in cabbages_ports:
-    if port == 'down :x:':
-        cabbages_count += 1
+def check_server_status(server_url, tcp_port, udp_ports):
+    web_status = 'running :bulb:' if check_tcp_port(server_url, tcp_port) else 'unavailable :wrench:'
 
-skillz_web = 'running :bulb:' if check_tcp_port(skillz_url, tcp_port80) else 'unavailable :wrench:'
-skillz7777 = 'up :white_check_mark:' if check_udp_port(skillz_url, udp_port7777) else 'down :x:'
-skillz7778 = 'up :white_check_mark:' if check_udp_port(skillz_url, udp_port7778) else 'down :x:'
-skillz_ports = [skillz7777, skillz7778]
-skillz_count = 0
+    port_status = []
+    for port in udp_ports:
+        port_status.append('up :white_check_mark:' if check_udp_port(server_url, port) else 'down :x:')
 
-for port in skillz_ports:
-    if port == 'down :x:':
-        skillz_count += 1
+    down_count = 0
+    for status in port_status:
+        if status == 'down :x:' and web_status == 'running :bulb:':
+            down_count += 1
+        else:
+            down_count = 0
 
-anhur_web = 'running :bulb:' if check_tcp_port(anhur_url, tcp_port80) else 'unavailable :wrench:'
-anhur7777 = 'up :white_check_mark:' if check_udp_port(anhur_url, udp_port7777) else 'down :x:'
-anhur7778 = 'up :white_check_mark:' if check_udp_port(anhur_url, udp_port7778) else 'down :x:'
-anhur_ports = [anhur7777, anhur7778]
-anhur_count = 0
+    return web_status, port_status, down_count
 
-for port in anhur_ports:
-    if port == 'down :x:':
-        anhur_count += 1
 
-syco_web = 'running :bulb:' if check_tcp_port(syco_url, tcp_port8081) else 'unavailable :wrench:'
-syco7777 = 'up :white_check_mark:' if check_udp_port(syco_url, udp_port7777) else 'down :x:'
-syco7778 = 'up :white_check_mark:' if check_udp_port(syco_url, udp_port7778) else 'down :x:'
-syco7779 = 'up :white_check_mark:' if check_udp_port(syco_url, udp_port7779) else 'down :x:'
-syco7780 = 'up :white_check_mark:' if check_udp_port(syco_url, udp_port7780) else 'down :x:'
-syco_ports = [syco7777, syco7778, syco7779, syco7780]
-syco_count = 0
+cabbages_web, cabbages_ports, cabbages_count = check_server_status(
+    cabbages_url, tcp_port80, [udp_port7777, udp_port7778]
+)
 
-for port in syco_ports:
-    if port == 'down :x:':
-        syco_count += 1
+skillz_web, skillz_ports, skillz_count = check_server_status(
+    skillz_url, tcp_port80, [udp_port7777, udp_port7778]
+)
+
+anhur_web, anhur_ports, anhur_count = check_server_status(
+    anhur_url, tcp_port80, [udp_port7777, udp_port7778]
+)
+
+syco_web, syco_ports, syco_count = check_server_status(
+    syco_url, tcp_port8081, [udp_port7777, udp_port7778, udp_port7779, udp_port7780]
+)
 
 
 def get_response(message: str) -> str:
@@ -106,9 +98,9 @@ def get_response(message: str) -> str:
     if p_message == '!status':
         return (('>>> ## Gigantic Server Status'
                  '\n\n**EU3** [Cabbages\'s Server](http://{}) :flag_eu: | The Web UI is {} and **{}/2** instances are available'
-                 '\n\n**EU2**[Skillz\'s Server](http://{}) :flag_eu: | The Web UI is {} and **{}/2** instances are available'
-                 '\n\n**NA3**[Anhur\'s Server](http://{}) :flag_us: | The Web UI is {} and **{}/2** instances are available'
-                 '\n\n**NA5**[Syco\'s Server](http://{}) :flag_us: | The Web UI is {} and **{}/4** instances are available')
+                 '\n\n**EU2** [Skillz\'s Server](http://{}) :flag_eu: | The Web UI is {} and **{}/2** instances are available'
+                 '\n\n**NA3** [Anhur\'s Server](http://{}) :flag_us: | The Web UI is {} and **{}/2** instances are available'
+                 '\n\n**NA5** [Syco\'s Server](http://{}) :flag_us: | The Web UI is {} and **{}/4** instances are available')
                 .format(cabbages_url, cabbages_web, cabbages_count,
                         skillz_url, skillz_web, skillz_count,
                         anhur_url, anhur_web, anhur_count,
