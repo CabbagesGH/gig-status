@@ -11,4 +11,4 @@ Use `!status <server_name> <instance_number>` to see the status of a specific in
 
 ![Instance Status](https://cdn.discordapp.com/attachments/825711203053469697/1183120408774463549/image.png)
 
-Add a `?` to the start of the command to send the response to you privately. For example: `?!status`
+Add a `?` to the start of the command to send the response to you privately. For example: `?!status` 
