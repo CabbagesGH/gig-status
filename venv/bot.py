@@ -6,14 +6,17 @@ async def send_message(message, user_message, is_private):
     try:
         response = responses.get_response(user_message)
         # await message.author.send(response) if is_private and message.channel != 'bot-alert' else await message.channel.send(response)
-        await message.channel.send(response)
+        if response is not None:
+            await message.channel.send(response)
+        else:
+            pass
 
     except Exception as e:
         print(e)
 
 
 def run_discord_bot():
-    TOKEN = 'MTE2OTAyMTg2MzM0Nzg3OTk4Ng.Goevqh.iz601d3OXY5wWkNJUaI-e37GYBdEiWI6oLQIaY'
+    TOKEN = ''
     intents = discord.Intents.default()
     intents.message_content = True
     client = discord.Client(intents=intents)

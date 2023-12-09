@@ -46,7 +46,7 @@ def check_tcp_port(domain, tcp_port):
         sock.close()
 
 
-# Gigantic Servers JSON
+# Gigantic Servers JSON, all data needed to check status
 servers = {
     'cabbages': {
         'url': 'cabbages.servegame.com',
@@ -92,7 +92,7 @@ def check_server_status(server_url, tcp_port, udp_ports):
 
     return web_status, port_status, down_count
 
-
+# Checks individual ports a user specifies
 def check_port_status(server_name, port_number):
     server_data = servers.get(server_name)
     if server_data is None:
@@ -148,5 +148,5 @@ def get_response(message: str) -> str:
         port_number = int(match.group(2))
 
         return check_port_status(server_name, port_number)
-    else:
+    elif '!status' in p_message:
         return 'Invalid command. Use !status <server_name> <instance_number>'
