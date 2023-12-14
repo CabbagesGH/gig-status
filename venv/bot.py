@@ -26,6 +26,10 @@ def run_discord_bot():
     client = discord.Client(intents=intents)
 
     @client.event
+    async def on_connect():
+        await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for !status"))
+
+    @client.event
     async def on_ready():
         print(f'{client.user} is now running!')
 
@@ -41,10 +45,11 @@ def run_discord_bot():
         print(f'{username} said: "{user_message}" ({channel})')
 
         # If message uses '?' at the beginning the bot will respond privately
-        if user_message[0] == '?':
-            user_message = user_message[1:]
-            await send_message(message, user_message, is_private=True)
-        else:
-            await send_message(message, user_message, is_private=False)
+        if len(user_message) > 0:
+            if user_message[0] == '?':
+                user_message = user_message[1:]
+                await send_message(message, user_message, is_private=True)
+            else:
+                await send_message(message, user_message, is_private=False)
 
     client.run(TOKEN)
