@@ -2,6 +2,7 @@ import socket
 import re
 from core import Server, StatusManager
 
+# Define base servers
 servers = {
     "cabbages": Server(),
     "skillz": Server({"url": "gig.illskillz.pro","udp_ports": [7777],}),
@@ -33,6 +34,7 @@ def get_response(message: str) -> str:
 
         for key, instance in servers.items():
 
+            # Empty header here to avoid having it for each server
             status = StatusManager(instance, key, "")
 
             base =+ status.parse_current_status()
@@ -50,6 +52,7 @@ def get_response(message: str) -> str:
 
     server_name = match_server_check.group(1)
 
+    # Check if the server is correct
     try:
         status_instance = StatusManager(servers.get(server_name), server_name)
 
@@ -60,6 +63,7 @@ def get_response(message: str) -> str:
     if match_port_check:
         ports = int(match_port_check.group(2))
 
+        # Properly handle port errors
         try:
             return status_instance.check_port_status(ports)
         
