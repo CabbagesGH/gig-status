@@ -1,4 +1,6 @@
 import os
+import traceback
+
 import discord
 import responses
 
@@ -15,6 +17,7 @@ async def send_message(message, user_message, is_private):
             pass
 
     except Exception as e:
+        print(traceback.format_exc())
         print(e)
 
 

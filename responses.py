@@ -1,14 +1,14 @@
-import socket
+import concurrent.futures
 import re
 from core import Server, StatusManager
 
 # Define base servers
 servers = {
     "cabbages": Server(),
-    "skillz": Server({"url": "gig.illskillz.pro", "udp_ports": [7777]}),
-    "anhur": Server({"url": "anhur.servegame.com", "flag": ":flag_us:", "code": "NA3"}),
-    "syco": Server({
-        "url": "syco.servegame.com", 
+    "skillz": Server(**{"url": "gig.illskillz.pro", "udp_ports": [7777]}),
+    "anhur": Server(**{"url": "anhur.servegame.com", "flag": ":flag_us:", "code": "NA3"}),
+    "syco": Server(**{
+        "url": "syco.servegame.com",
         "udp_ports": [7777, 7778, 7779, 7780],
         "tcp_ports": 8081,
         "flag": ":flag_us:", 
@@ -32,12 +32,12 @@ def get_response(message: str) -> str:
 
         base = ">>> ## Gigantic Server Status"
 
-        for key, instance in servers.items():
+        with concurrent.futures.ThreadPoolExecutor() as executor:
 
-            # Empty header here to avoid having it for each server
-            status = StatusManager(instance, key, "")
+            futures = [executor.submit(StatusManager.server_worker, instance, key) for key, instance in servers.items()]
 
-            base += status.parse_current_status()
+            for future in concurrent.futures.as_completed(futures):
+                base += future.result()
 
         return base
 
@@ -52,30 +52,35 @@ def get_response(message: str) -> str:
 
     if match_port_check:
         server_name = match_port_check.group(1)
-    else:
+    elif match_server_check:
         server_name = match_server_check.group(1)
+    else:
+        server_name = None
 
     # Check if the server is correct
-    try:
-        status_instance = StatusManager(servers.get(server_name), server_name)
-
-    except KeyError:
-        return f"{server_name} is not a valid server. Valid servers are: {servers.keys}"
-
-    # If port check matches then return single instance return message
-    if match_port_check:
-        port = match_port_check.group(2)
-
-        # Properly handle port errors
+    if server_name:
         try:
-            return status_instance.check_port_status(port)
+            status_instance = StatusManager(servers[server_name], server_name)
 
-        except status_instance.InvalidPortError:
-            return f"Invalid port {port} for server {server_name.capitalize()}. Valid ports are: {status_instance.server.udp_ports}"
+            # If port check matches then return single instance return message
+            if match_port_check:
+                port = match_port_check.group(2)
 
-    # If server check matches then return single server return message
-    if match_server_check:
-        return status_instance.parse_current_status()
+                # Properly handle port errors
+                try:
+                    return status_instance.check_port_status(port)
+
+                except status_instance.InvalidPortError:
+                    valid_udp_ports = ", ".join([str(port) for port in status_instance.server.udp_ports])
+                    return f"Invalid port {port} for server {server_name.capitalize()}. Valid ports are: {valid_udp_ports}"
+
+            # If server check matches then return single server return message
+            if match_server_check:
+                return status_instance.parse_current_status()
+
+        except KeyError:
+            valid_server_names = ", ".join([server for server in servers.keys()])
+            return f"{server_name} is not a valid server. Valid servers are: {valid_server_names}"
 
     # Else if status command is invoked by user but parameters are invalid
     elif '!status' in p_message:

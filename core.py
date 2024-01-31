@@ -1,37 +1,28 @@
 import socket
-from dataclasses import dataclass, field
 
 
 class Server:
 
-    def __init__(self, settings: dict = {}):
+    def __init__(self, **kwargs):
         """Initialize a server object.
 
         Args:
-            settings (dict, optional): Optional overrides that will replace default settings. Defaults to dict.
+            kwargs (optional): Optional overrides that will replace default settings. Defaults to None.
         """
-        # Create an immutable copy of the settings using a frozen dataclass
-        self.settings = FrozenSettings(**settings)
 
-        # Access settings attributes directly from the immutable object
-        self.url = self.settings.url
-        self.udp_ports = self.settings.udp_ports
-        self.tcp_ports = self.settings.tcp_ports
-        self.flag = self.settings.flag
-        self.code = self.settings.code
-
-
-@dataclass(frozen=True)
-class FrozenSettings:
-    url: str = "cabbages.servegame.com"
-    udp_ports: list[int] = field(default_factory=lambda: [7777, 7778])
-    tcp_ports: int = 80
-    flag: str = ":flag_eu:"
-    code: str = "EU2"
+        self.url = kwargs.get("url", "cabbages.servegame.com")
+        self.udp_ports = kwargs.get("udp_ports", [7777, 7778])
+        self.tcp_ports = kwargs.get("tcp_ports", 80)
+        self.flag = kwargs.get("flag", ":flag_eu:")
+        self.code = kwargs.get("code", "EU2")
 
 
 class StatusManager:
-  
+
+    @staticmethod
+    def server_worker(instance: Server, key: str):
+        return StatusManager(instance, key, "").parse_current_status()
+
     def __init__(self, server: Server, name: str, header: str = ">>> ## Gigantic Server Status") -> None:
         """Initialize a server status manager.
 
