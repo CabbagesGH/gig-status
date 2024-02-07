@@ -21,13 +21,10 @@ servers = {
 def get_response(message: str) -> str:
     p_message = message.lower()
 
-    # Extract server name from user's input
-    match_server_check = re.search(r'^!status\s+(\w+)$', p_message)
+    # Extract server name (and port if added) from user's input
+    match_status_check = re.search(r'^!status\s+(\w*)\s*(\S*)$', p_message)
 
-    # Extract server name and port number from the user's input
-    match_port_check = re.search(r'^!status\s+(\w+)\s+(\d+)$', p_message)
-
-    # If just status is invoked show full server list and statuses
+    # If just status is invoked show full server list and statuses, threadpool used to speed up functions
     if p_message == '!status':
 
         base = ">>> ## Gigantic Server Status"
@@ -46,42 +43,43 @@ def get_response(message: str) -> str:
         return ('>>> ### Gigantic Server Status Guide'
                 '\n\nCommands are:'
                 '\n\n`!status`: full server list'
-                '\n`!status <server_name>`: to see the status for a specific server, for example`!status anhur`'
+                '\n`!status <server_name>`: to see the status for a specific server, for example `!status anhur`'
                 '\n`!status <server_name> <instance_number>`: to see the status of a specific instance of a server, for example`!status syco 7777`'
                 '\nAdd `?` at the beginning to send it to you via DM, for example `?!status skillz`')
 
-    if match_port_check:
-        server_name = match_port_check.group(1)
-    elif match_server_check:
-        server_name = match_server_check.group(1)
+    # Checks if message matches regex for single server or single port checking commands, and sets the server name
+    if match_status_check:
+        server_name = match_status_check.group(1)
     else:
         server_name = None
 
-    # Check if the server is correct
+    # Check if the server is correct, and if correct check single server or single port
     if server_name:
         try:
             status_instance = StatusManager(servers[server_name], server_name)
 
             # If port check matches then return single instance return message
-            if match_port_check:
-                port = match_port_check.group(2)
+            if match_status_check.group(2):
+                port = match_status_check.group(2)
 
                 # Properly handle port errors
                 try:
-                    return status_instance.check_port_status(port)
+                    return status_instance.check_port_status(int(port))
 
-                except status_instance.InvalidPortError:
+                # If not an integer or if port doesn't match server lists
+                except (ValueError, status_instance.InvalidPortError):
                     valid_udp_ports = ", ".join([str(port) for port in status_instance.server.udp_ports])
-                    return f"Invalid port {port} for server {server_name.capitalize()}. Valid ports are: {valid_udp_ports}"
+                    return f"Invalid port '{port}' for server {server_name.capitalize()}. Valid ports are: {valid_udp_ports}"
 
             # If server check matches then return single server return message
-            if match_server_check:
+            else:
                 return status_instance.parse_current_status()
 
+        # If server check doesn't match then list valid servers
         except KeyError:
             valid_server_names = ", ".join([server for server in servers.keys()])
-            return f"{server_name} is not a valid server. Valid servers are: {valid_server_names}"
+            return f"'{server_name}' is not a valid server. Valid servers are: {valid_server_names}"
 
-    # Else if status command is invoked by user but parameters are invalid
-    elif '!status' in p_message:
+    # Else if status command is invoked by user but parameters are invalid (checks for other common bot prefix)
+    elif '!status' in p_message or '~status' in p_message:
         return 'Invalid command. Use `!status help` to see see the guide'

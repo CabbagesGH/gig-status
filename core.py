@@ -1,13 +1,14 @@
 import socket
 
 
+# Server class for all server parameters to be held
 class Server:
 
     def __init__(self, **kwargs):
         """Initialize a server object.
 
         Args:
-            kwargs (optional): Optional overrides that will replace default settings. Defaults to None.
+            kwargs (optional): Optional overrides that will replace default kwargs. Defaults to the below.
         """
 
         self.url = kwargs.get("url", "cabbages.servegame.com")
@@ -17,12 +18,15 @@ class Server:
         self.code = kwargs.get("code", "EU2")
 
 
+# All defined functions for checking server ports
 class StatusManager:
 
+    # Static method for threadpool implementation in responses
     @staticmethod
     def server_worker(instance: Server, key: str):
         return StatusManager(instance, key, "").parse_current_status()
 
+    # Initialise server status manager
     def __init__(self, server: Server, name: str, header: str = ">>> ## Gigantic Server Status") -> None:
         """Initialize a server status manager.
 
@@ -44,22 +48,25 @@ class StatusManager:
         # Check for server status at init time since it's almost always needed
         self.check_server_status()
 
+    # Single port checker
     def check_port_status(self, port: int):
-        
+
+        # If port not used for specified server
         if port not in self.server.udp_ports:
             raise self.InvalidPortError
 
         return (
             f"{self.header}"
-            f"\n\n{self.name}:{port}: Instance is {'running' if self.socket_connect(port) else 'available'}"
+            f"\n\n{self.name.capitalize()} {port}: Instance is {'running' if self.socket_connect(port, type='UDP') else 'available'}"
         )
-    
+
+    # TCP/UDP port checking handler
     def socket_connect(self, ports: int, type='TCP'):
         """Checks if a UDP/TCP port is open on the server.
 
         Args:
             ports (int): The ports number to check.
-            type (str): Port check type, Defaults to UDP
+            type (str): Port check type, Defaults to TCP
 
         Returns:
             True if the port is open, False otherwise.
@@ -79,20 +86,18 @@ class StatusManager:
             else:
                 sock.connect((self.server.url, ports))
 
-            print(True)
             return True
         
         except socket.timeout:
-            print('timeout')
             return False
         
         except socket.error:
-            print('error')
             return False
         
         finally:
             sock.close()
 
+    # Server web status checker and available port counter
     def check_server_status(self):
         """Check the server status and store results
         """
@@ -104,13 +109,15 @@ class StatusManager:
             if status == 'down :x:' and self.web == 'running :bulb:':
                 self.downs += 1
 
+    # Sets up header and status message for full status check and single server status check
     def parse_current_status(self):
-        """Return a parsed a server status string containing all necessary information
+        """Return a parsed server status string containing all necessary information
         """
         return (
             f"{self.header}"
             f"\n\n**{self.server.code}** [{self.name.capitalize()}'s Server](http://{self.server.url}) {self.server.flag} | The Web UI is {self.web} and **{self.downs}/{len(self.server.udp_ports)}** instances are available"
             )
 
+    # Invalid port exception, passes to exception handler in responses.py
     class InvalidPortError(Exception):
         pass
