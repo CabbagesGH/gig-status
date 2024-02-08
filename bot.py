@@ -1,4 +1,5 @@
 import os
+import traceback
 import discord
 import responses
 
@@ -6,7 +7,6 @@ import responses
 async def send_message(message, user_message, is_private):
     try:
         response = responses.get_response(user_message)
-        # await message.author.send(response) if is_private and message.channel != 'bot-alert' else await message.channel.send(response)
         if response is not None and is_private:
             await message.author.send(response)
         elif response is not None:
@@ -15,6 +15,7 @@ async def send_message(message, user_message, is_private):
             pass
 
     except Exception as e:
+        print(traceback.format_exc())
         print(e)
 
 
